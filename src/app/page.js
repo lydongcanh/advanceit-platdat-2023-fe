@@ -1,6 +1,9 @@
 "use client";
 
 import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
+import "primereact/resources/primereact.min.css";
+import "primereact/resources/themes/saga-blue/theme.css";
+
 import {
     MainContainer,
     ChatContainer,
@@ -9,13 +12,15 @@ import {
     MessageInput,
     ConversationHeader,
     Avatar,
-    TypingIndicator, 
+    TypingIndicator,
     Button
 } from '@chatscope/chat-ui-kit-react';
 
 import {useEffect, useState} from 'react';
 import {GetContextAsync, GetKeywordsAsync, GetSuggestionAsync} from "@/app/service";
-import {AiOutlineClear} from "react-icons/ai";
+import {AiOutlineClear, AiOutlineSetting} from "react-icons/ai";
+import {Dialog} from "primereact/dialog";
+import {InputNumber} from "primereact/inputnumber";
 
 export default function Home() {
     const USER_NAME = 'User';
@@ -32,6 +37,11 @@ export default function Home() {
     const [currentQuestion, setCurrentQuestion] = useState('');
     const [currentJob, setCurrentJob] = useState('');
 
+    const [showSettings, setShowSettings] = useState(false);
+    const [maxNewTokens, setMaxNewTokens] = useState(512);
+    const [topP, setTopP] = useState(0.9);
+    const [temperature, setTemperature] = useState(0.6);
+
     async function AskForSuggestionAsync() {
         if (dataroomId === 0 || currentQuestion === '') {
             return;
@@ -39,7 +49,7 @@ export default function Home() {
 
         try {
             setCurrentJob('Asking llama-2 to provide the list of keywords...');
-            const keywords = await GetKeywordsAsync(currentQuestion);
+            const keywords = await GetKeywordsAsync(currentQuestion, maxNewTokens, topP, temperature);
             AddNewAssistantMessage(keywords, 'Related keywords:');
 
             setCurrentJob('Getting context from Kendra...');
@@ -47,13 +57,14 @@ export default function Home() {
             AddNewAssistantMessage(context, 'Aggregated context:');
 
             setCurrentJob('Asking llama-2 for the suggestion...');
-            const suggestion = await GetSuggestionAsync(dataroomId, currentQuestion, context);
+            const suggestion = await GetSuggestionAsync(dataroomId, currentQuestion, context, maxNewTokens, topP, temperature);
             AddNewAssistantMessage(suggestion, 'Final suggestion:');
         } catch (e) {
             console.error(e);
             AddNewAssistantMessage('There was an error while processing your question, please try again...')
         } finally {
             setCurrentJob('');
+            setCurrentQuestion('');
         }
     }
 
@@ -101,35 +112,64 @@ export default function Home() {
         }
     }
 
-    return (
-        <main style={{position: 'relative', height: '98vh', margin: 'auto', width: '50%'}}>
-            <MainContainer>
-                <ChatContainer>
-                    <ConversationHeader>
-                        <Avatar
-                            src={'https://media.istockphoto.com/id/1253384179/vector/alpaca-hipster-vintage-vector-icon-illustration.jpg?s=612x612&w=0&k=20&c=4GXo-sqBa_cI3KMARzmQti1Uuj87770F0_JPHz8_vFM='}
-                            name={ASSISTANT_NAME}
-                        />
-                        <ConversationHeader.Content userName={ASSISTANT_NAME} info="llama-2-13b-f"/>
-                        <ConversationHeader.Actions>
-                            <Button disabled={dataroomId === 0} icon={<AiOutlineClear size={24} />} onClick={ClearMessages} />
-                        </ConversationHeader.Actions>
-                    </ConversationHeader>
+    function SettingDialog() {
+        return (
+            <Dialog header="Settings" visible={showSettings} style={{width: '50vw'}} onHide={() => setShowSettings(false)}>
+                <div className="card flex flex-wrap gap-3 p-fluid">
+                    <div className="flex-auto">
+                        <label htmlFor="integeronly" className="font-bold block mb-2">max_new_tokens</label>
+                        <InputNumber inputId="integeronly" value={maxNewTokens} onValueChange={(e) => setMaxNewTokens(e.value)} />
+                    </div>
+                    <br />
+                    
+                    <div className="flex-auto">
+                        <label htmlFor="withoutgrouping" className="font-bold block mb-2">top_p</label>
+                        <InputNumber value={topP} onValueChange={(e) => setTopP(e.value)} min={0} max={1}/>
+                    </div>
+                    <br />
 
-                    <MessageList typingIndicator={currentJob !== '' && <TypingIndicator content={currentJob}/>}>
-                        {messages.map(item => (
-                            <Message model={item}>
-                                {item.header && <Message.Header sender={item.header}/>}
-                            </Message>
-                        ))}
-                    </MessageList>
-                    <MessageInput
-                        placeholder="Aa"
-                        attachButton={false}
-                        onSend={HandleNewUserMessageEntered}
-                    />
-                </ChatContainer>
-            </MainContainer>
-        </main>
+                    <div className="flex-auto">
+                        <label htmlFor="minmaxfraction" className="font-bold block mb-2">temperature</label>
+                        <InputNumber value={temperature} onValueChange={(e) => setTemperature(e.value)} min={0} max={1} />
+                    </div>
+                </div>
+            </Dialog>
+        )
+    }
+
+    return (
+        <>
+            {SettingDialog()}
+            <main style={{position: 'relative', height: '98vh', margin: 'auto', width: '50%'}}>
+                <MainContainer>
+                    <ChatContainer>
+                        <ConversationHeader>
+                            <Avatar
+                                src={'https://media.istockphoto.com/id/1253384179/vector/alpaca-hipster-vintage-vector-icon-illustration.jpg?s=612x612&w=0&k=20&c=4GXo-sqBa_cI3KMARzmQti1Uuj87770F0_JPHz8_vFM='}
+                                name={ASSISTANT_NAME}
+                            />
+                            <ConversationHeader.Content userName={ASSISTANT_NAME} info="llama-2-13b-f"/>
+                            <ConversationHeader.Actions>
+                                <Button disabled={dataroomId === 0} icon={<AiOutlineClear size={24}/>} onClick={ClearMessages}/>
+                                <Button icon={<AiOutlineSetting size={24}/>} onClick={() => setShowSettings(true)}/>
+                            </ConversationHeader.Actions>
+                        </ConversationHeader>
+
+                        <MessageList typingIndicator={currentJob !== '' && <TypingIndicator content={currentJob}/>}>
+                            {messages.map(item => (
+                                <Message model={item}>
+                                    {item.header && <Message.Header sender={item.header}/>}
+                                </Message>
+                            ))}
+                        </MessageList>
+                        <MessageInput
+                            placeholder="Aa"
+                            attachButton={false}
+                            onSend={HandleNewUserMessageEntered}
+                        />
+                    </ChatContainer>
+                </MainContainer>
+            </main>
+        </>
     )
 }

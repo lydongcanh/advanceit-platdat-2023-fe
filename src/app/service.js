@@ -2,14 +2,14 @@ import axios from 'axios';
 
 const URL_PREFIX = 'https://identity-auth0-integration-api.dev2.core.ansarada.com/advance-it/v1';
 
-async function AskLlamaAsync(inputs) {
+async function AskLlamaAsync(inputs, maxNewToken = 512, topP = 0.9, temperature = 0.6) {
     return await axios.post(`${URL_PREFIX}/lambda/trigger`, {
         "payload": {
             "inputs": [inputs],
             "parameters": {
-                "max_new_tokens": 512,
-                "top_p": 0.9,
-                "temperature": 0.6
+                "max_new_tokens": maxNewToken,
+                "top_p": topP,
+                "temperature": temperature
             }
         }
     });
@@ -33,7 +33,7 @@ async function QueryKendra(dataroomId, queryText) {
     });
 }
 
-export async function GetKeywordsAsync(question) {
+export async function GetKeywordsAsync(question, maxNewToken = 512, topP = 0.9, temperature = 0.6) {
     const askLlamaResponse = await AskLlamaAsync([
         {
             "role": "system",
@@ -43,7 +43,7 @@ export async function GetKeywordsAsync(question) {
             "role": "user",
             "content": `Return a list of keywords related to this question: '${question}' in json format.`
         }
-    ]);
+    ], maxNewToken, topP, temperature);
 
     const keywordsContent = askLlamaResponse.data[0].generation.content;
 
@@ -57,7 +57,7 @@ export async function GetContextAsync(dataroomId, keywords) {
     return queryKendraResponse.data.resultItems.map(item => item.documentExcerpt.text).join('\n');
 }
 
-export async function GetSuggestionAsync(dataroomId, question, context) {
+export async function GetSuggestionAsync(dataroomId, question, context, maxNewToken = 512, topP = 0.9, temperature = 0.6) {
     const askLlamaResponse = await AskLlamaAsync([
         {
             "role": "user",
@@ -71,7 +71,7 @@ export async function GetSuggestionAsync(dataroomId, question, context) {
             "role": "user",
             "content": `Based on the provided information, answer this question for the dataroom ${dataroomId}: '${question}'.`
         }
-    ]);
+    ], maxNewToken, topP, temperature);
 
     return askLlamaResponse.data[0].generation.content;
 }
