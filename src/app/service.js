@@ -105,11 +105,11 @@ export async function GetSuggestionAsync(dataroomId, question, context, maxNewTo
     const askLlamaResponse = await AskLlamaAsync([
         {
             "role": "user",
-            "content": `Hello`
+            "content": `The dataroom ${dataroomId} has this information: ${context}.`
         },
         {
             "role": "assistant",
-            "content": `The dataroom ${dataroomId} has the information: ${context}.`
+            "content": `Ok.`
         },
         {
             "role": "user",
