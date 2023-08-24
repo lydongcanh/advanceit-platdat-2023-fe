@@ -17,7 +17,13 @@ import {
 } from '@chatscope/chat-ui-kit-react';
 
 import {useEffect, useState} from 'react';
-import {GetContextAsync, GetKeywordsAsync, GetSuggestionAsync} from "@/app/service";
+import {
+    GetContextAsync,
+    GetDataRoomDetails,
+    GetKeywordsAsync,
+    GetSuggestionAsync,
+    JsonToBulletString
+} from "@/app/service";
 import {AiOutlineClear, AiOutlineSetting} from "react-icons/ai";
 import {Dialog} from "primereact/dialog";
 import {InputNumber} from "primereact/inputnumber";
@@ -34,15 +40,16 @@ export default function Home() {
 
     const [messages, setMessages] = useState([FIRST_MESSAGE]);
     const [dataroomId, setDataroomId] = useState(0);
+    const [dataroomDetails, setDataroomDetails] = useState(null);
     const [currentQuestion, setCurrentQuestion] = useState('');
     const [currentJob, setCurrentJob] = useState('');
-
+    
     const [showSettings, setShowSettings] = useState(false);
     const [maxNewTokens, setMaxNewTokens] = useState(512);
     const [topP, setTopP] = useState(0.9);
     const [temperature, setTemperature] = useState(0.6);
     const [kendraPageSize, setKendraPageSize] = useState(7);
-
+    
     async function AskForSuggestionAsync() {
         if (dataroomId === 0 || currentQuestion === '') {
             return;
@@ -54,7 +61,15 @@ export default function Home() {
             AddNewAssistantMessage(keywords, 'Related keywords:');
 
             setCurrentJob('Getting context from Kendra...');
-            const context = await GetContextAsync(dataroomId, keywords, kendraPageSize);
+            let context = await GetContextAsync(dataroomId, keywords, kendraPageSize);
+            if (dataroomDetails) {
+                delete dataroomDetails.dataroom_id;
+                delete dataroomDetails.email_domain;
+                if (!dataroomDetails.transactiontypename) {
+                    delete dataroomDetails.transactiontypename;
+                }
+                context += `\n${JsonToBulletString(dataroomDetails)}`;
+            }
             AddNewAssistantMessage(context, 'Aggregated context:');
 
             setCurrentJob('Asking llama-2 for the suggestion...');
@@ -73,6 +88,15 @@ export default function Home() {
         AskForSuggestionAsync();
     }, [currentQuestion]);
 
+    useEffect(() => {
+        if (dataroomId === 0) {
+            return;
+        }
+        
+        const details = GetDataRoomDetails(dataroomId);
+        setDataroomDetails(details);
+    }, [dataroomId]);
+    
     function AddNewAssistantMessage(message, header) {
         setMessages(current => [...current, {
             sender: ASSISTANT_NAME,

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import dataroom_details from './qna_dr.json';
 
 const URL_PREFIX = 'https://identity-auth0-integration-api.dev2.core.ansarada.com/advance-it/v1';
 
@@ -15,7 +16,7 @@ async function AskLlamaAsync(inputs, maxNewToken = 512, topP = 0.9, temperature 
     });
 }
 
-async function QueryKendra(dataroomId, queryText) {
+async function QueryKendraAsync(dataroomId, queryText) {
     return await axios.post(`${URL_PREFIX}/kendra/query`, {
         "queryText": queryText,
         "attributeFilter": {
@@ -33,7 +34,7 @@ async function QueryKendra(dataroomId, queryText) {
     });
 }
 
-async function RetrieveKendra(dataroomId, queryText, pageSize = 5) {
+async function RetrieveKendraAsync(dataroomId, queryText, pageSize = 5) {
     return await axios.post(`${URL_PREFIX}/kendra/retrieve`, {
         "queryText": queryText,
         "attributeFilter": {
@@ -52,6 +53,29 @@ async function RetrieveKendra(dataroomId, queryText, pageSize = 5) {
         "pageNumber": 1
     });
 } 
+
+export function GetDataRoomDetails(dataroom_id) {
+    return dataroom_details.find(d => d.dataroom_id == dataroom_id);
+}
+
+export function JsonToBulletString(obj, indent = 0) {
+    let result = '';
+
+    for (let key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            const value = obj[key];
+            const indentation = '  '.repeat(indent);
+
+            if (typeof value === 'object' && value !== null) {
+                result += `${indentation}${key}:\n${JsonToBulletString(value, indent + 1)}`;
+            } else {
+                result += `${indentation}${key}: ${value}\n`;
+            }
+        }
+    }
+
+    return result;
+}
 
 export async function GetKeywordsAsync(question, maxNewToken = 512, topP = 0.9, temperature = 0.6) {
     const askLlamaResponse = await AskLlamaAsync([
@@ -73,7 +97,7 @@ export async function GetKeywordsAsync(question, maxNewToken = 512, topP = 0.9, 
 }
 
 export async function GetContextAsync(dataroomId, keywords, pageSize = 5) {
-    const retrieveKendraResponse = await RetrieveKendra(dataroomId, keywords, pageSize);
+    const retrieveKendraResponse = await RetrieveKendraAsync(dataroomId, keywords, pageSize);
     return retrieveKendraResponse.data.resultItems.map(item => item.content).join('\n');
 }
 
