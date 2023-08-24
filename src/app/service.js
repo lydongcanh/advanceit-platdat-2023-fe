@@ -33,7 +33,7 @@ async function QueryKendra(dataroomId, queryText) {
     });
 }
 
-async function RetrieveKendra(dataroomId, queryText) {
+async function RetrieveKendra(dataroomId, queryText, pageSize = 5) {
     return await axios.post(`${URL_PREFIX}/kendra/retrieve`, {
         "queryText": queryText,
         "attributeFilter": {
@@ -47,7 +47,9 @@ async function RetrieveKendra(dataroomId, queryText) {
                     }
                 }
             ]
-        }
+        },
+        "pageSize": pageSize,
+        "pageNumber": 1
     });
 } 
 
@@ -70,9 +72,8 @@ export async function GetKeywordsAsync(question, maxNewToken = 512, topP = 0.9, 
     return JSON.parse(keywordsContent.substring(leftBracketIndex, rightBracketIndex)).map(c => c).join(', ');
 }
 
-export async function GetContextAsync(dataroomId, keywords) {
-    const retrieveKendraResponse = await RetrieveKendra(dataroomId, keywords);
-    console.log("retrieveKendraResponse", retrieveKendraResponse);
+export async function GetContextAsync(dataroomId, keywords, pageSize = 5) {
+    const retrieveKendraResponse = await RetrieveKendra(dataroomId, keywords, pageSize);
     return retrieveKendraResponse.data.resultItems.map(item => item.content).join('\n');
 }
 

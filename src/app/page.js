@@ -41,6 +41,7 @@ export default function Home() {
     const [maxNewTokens, setMaxNewTokens] = useState(512);
     const [topP, setTopP] = useState(0.9);
     const [temperature, setTemperature] = useState(0.6);
+    const [kendraPageSize, setKendraPageSize] = useState(5);
 
     async function AskForSuggestionAsync() {
         if (dataroomId === 0 || currentQuestion === '') {
@@ -53,7 +54,7 @@ export default function Home() {
             AddNewAssistantMessage(keywords, 'Related keywords:');
 
             setCurrentJob('Getting context from Kendra...');
-            const context = await GetContextAsync(dataroomId, keywords);
+            const context = await GetContextAsync(dataroomId, keywords, kendraPageSize);
             AddNewAssistantMessage(context, 'Aggregated context:');
 
             setCurrentJob('Asking llama-2 for the suggestion...');
@@ -116,6 +117,12 @@ export default function Home() {
         return (
             <Dialog header="Settings" visible={showSettings} style={{width: '50vw'}} onHide={() => setShowSettings(false)}>
                 <div className="card flex flex-wrap gap-3 p-fluid">
+                    <div className="flex-auto">
+                        <label htmlFor="integeronly" className="font-bold block mb-2">Max Kendra item</label>
+                        <InputNumber inputId="integeronly" value={kendraPageSize} onValueChange={(e) => setKendraPageSize(e.value)} />
+                    </div>
+                    <br />
+
                     <div className="flex-auto">
                         <label htmlFor="integeronly" className="font-bold block mb-2">max_new_tokens</label>
                         <InputNumber inputId="integeronly" value={maxNewTokens} onValueChange={(e) => setMaxNewTokens(e.value)} />
