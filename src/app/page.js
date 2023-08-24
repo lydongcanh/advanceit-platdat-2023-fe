@@ -41,7 +41,7 @@ export default function Home() {
     const [maxNewTokens, setMaxNewTokens] = useState(512);
     const [topP, setTopP] = useState(0.9);
     const [temperature, setTemperature] = useState(0.6);
-    const [kendraPageSize, setKendraPageSize] = useState(5);
+    const [kendraPageSize, setKendraPageSize] = useState(7);
 
     async function AskForSuggestionAsync() {
         if (dataroomId === 0 || currentQuestion === '') {
