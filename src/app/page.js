@@ -142,25 +142,25 @@ export default function Home() {
             <Dialog header="Settings" visible={showSettings} style={{width: '50vw'}} onHide={() => setShowSettings(false)}>
                 <div className="card flex flex-wrap gap-3 p-fluid">
                     <div className="flex-auto">
-                        <label htmlFor="integeronly" className="font-bold block mb-2">Max Kendra item</label>
+                        <label htmlFor="integeronly" className="font-bold block mb-2">Kendra max retrieve item:</label>
                         <InputNumber inputId="integeronly" value={kendraPageSize} onValueChange={(e) => setKendraPageSize(e.value)} />
                     </div>
                     <br />
 
                     <div className="flex-auto">
-                        <label htmlFor="integeronly" className="font-bold block mb-2">max_new_tokens</label>
+                        <label htmlFor="integeronly" className="font-bold block mb-2">Llama-2 max_new_tokens:</label>
                         <InputNumber inputId="integeronly" value={maxNewTokens} onValueChange={(e) => setMaxNewTokens(e.value)} />
                     </div>
                     <br />
                     
                     <div className="flex-auto">
-                        <label htmlFor="withoutgrouping" className="font-bold block mb-2">top_p</label>
+                        <label htmlFor="withoutgrouping" className="font-bold block mb-2">Llama-2 top_p:</label>
                         <InputNumber value={topP} onValueChange={(e) => setTopP(e.value)} min={0} max={1}/>
                     </div>
                     <br />
 
                     <div className="flex-auto">
-                        <label htmlFor="minmaxfraction" className="font-bold block mb-2">temperature</label>
+                        <label htmlFor="minmaxfraction" className="font-bold block mb-2">Llama-2 temperature:</label>
                         <InputNumber value={temperature} onValueChange={(e) => setTemperature(e.value)} min={0} max={1} />
                     </div>
                 </div>
