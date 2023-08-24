@@ -64,7 +64,6 @@ export default function Home() {
             let context = await GetContextAsync(dataroomId, keywords, kendraPageSize);
             if (dataroomDetails) {
                 delete dataroomDetails.dataroom_id;
-                delete dataroomDetails.email_domain;
                 if (!dataroomDetails.transactiontypename) {
                     delete dataroomDetails.transactiontypename;
                 }
